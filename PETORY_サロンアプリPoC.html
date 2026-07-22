@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PETORY for Salon — サロン管理アプリ（PoC）</title>
+<style>
+  :root{
+    --coral:#E88A94;--coral-d:#C56B76;--coral-l:#F7DCE0;--ink:#3B3336;--panel:#332C2F;
+    --mint:#7FBD9E;--mint-d:#548E72;--amber:#E6B450;--bg:#F6EFEE;--card:#fff;--sub:#8C8288;--line:#EFE2E2;
+    --t1:#5B8DEF;--t2:#E0894A;--t3:#8E6FD0; /* trimmer colors */
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Hiragino Kaku Gothic ProN","Meiryo",system-ui,sans-serif;background:var(--bg);color:var(--ink);height:100vh;overflow:hidden}
+  .app{display:flex;height:100vh}
+  /* sidebar */
+  .side{width:216px;background:var(--panel);color:#EBE2E4;display:flex;flex-direction:column;flex-shrink:0}
+  .brand{padding:20px 18px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .brand .p{font-size:22px}.brand b{font-size:19px;letter-spacing:2px}.brand small{display:block;font-size:9px;color:#b7a9ad;letter-spacing:2px;margin-top:1px}
+  .nav{padding:12px 10px;flex:1}
+  .nav a{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:11px;color:#cfc3c6;font-size:13.5px;font-weight:700;cursor:pointer;margin-bottom:3px}
+  .nav a .i{font-size:17px}
+  .nav a.on{background:var(--coral);color:#fff}
+  .nav a:hover:not(.on){background:rgba(255,255,255,.06)}
+  .side .me{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;font-size:12px}
+  .side .me .av{width:34px;height:34px;border-radius:50%;background:var(--t1);display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px}
+  .side .me small{display:block;color:#b7a9ad;font-size:10px}
+  /* main */
+  .main{flex:1;overflow-y:auto;padding:22px 28px 40px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .top h1{font-size:22px}.top .sub{font-size:12px;color:var(--sub);margin-top:3px}
+  .top .salon{font-size:12px;color:var(--sub);text-align:right}
+  .top .salon b{color:var(--ink);font-size:13px}
+  .view{display:none;animation:f .3s}.view.on{display:block}
+  @keyframes f{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  /* kpi */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+  .kpi{background:var(--card);border-radius:14px;padding:14px 16px;box-shadow:0 4px 14px rgba(180,120,120,.08)}
+  .kpi .n{font-size:24px;font-weight:800;color:var(--coral-d)}.kpi .l{font-size:11px;color:var(--sub);margin-top:2px;font-weight:600}
+  .kpi.hi .n{color:var(--mint-d)}
+  /* appointment board */
+  .sec-t{font-size:14px;font-weight:800;margin:4px 0 12px;display:flex;align-items:center;gap:8px}
+  .sec-t .b{width:4px;height:16px;background:var(--coral);border-radius:2px}
+  .board{display:flex;flex-direction:column;gap:10px}
+  .appt{background:var(--card);border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:16px;box-shadow:0 3px 12px rgba(180,120,120,.07);cursor:pointer;transition:.15s;border:1px solid transparent}
+  .appt:hover{transform:translateX(3px);border-color:var(--coral-l)}
+  .appt .time{font-size:15px;font-weight:800;color:var(--ink);width:52px;flex-shrink:0}
+  .appt .pic{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#f0d4c2);display:grid;place-items:center;font-size:22px;flex-shrink:0;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+  .appt .who{flex:1;min-width:120px}
+  .appt .who b{font-size:14.5px}.appt .who span{font-size:11.5px;color:var(--sub);display:block;margin-top:1px}
+  .trimmer{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;width:110px;flex-shrink:0}
+  .trimmer .av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:800}
+  .t1{background:var(--t1)}.t2{background:var(--t2)}.t3{background:var(--t3)}
+  .flags{display:flex;gap:5px;width:150px;flex-shrink:0;flex-wrap:wrap}
+  .flag{font-size:10.5px;padding:3px 8px;border-radius:20px;font-weight:700}
+  .flag.ok{background:#e5f2ec;color:var(--mint-d)}
+  .flag.warn{background:#fbf1dc;color:#9a7a2e}
+  .flag.al{background:var(--coral-l);color:var(--coral-d)}
+  .status{width:132px;flex-shrink:0}
+  .status .bar{height:7px;background:#efe6e6;border-radius:5px;overflow:hidden}
+  .status .fill{height:100%;background:linear-gradient(90deg,var(--coral),var(--mint))}
+  .status small{font-size:10.5px;color:var(--sub);font-weight:700;display:block;margin-top:4px}
+  .aibadge{font-size:10px;background:linear-gradient(135deg,#7a6fd0,#5b8def);color:#fff;padding:3px 9px;border-radius:20px;font-weight:800;flex-shrink:0;white-space:nowrap}
+  /* pet detail */
+  .back{font-size:12px;color:var(--coral-d);cursor:pointer;font-weight:700;margin-bottom:12px;display:inline-block}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .card{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 4px 14px rgba(180,120,120,.08);margin-bottom:16px}
+  .prof{display:flex;align-items:center;gap:14px}
+  .prof .pic{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#f0d4c2);display:grid;place-items:center;font-size:30px;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+  .prof h2{font-size:19px}.prof p{font-size:12px;color:var(--sub);margin-top:2px}
+  .rec{display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px solid var(--line)}
+  .rec .ri{width:34px;height:34px;border-radius:10px;background:#fdf5f2;display:grid;place-items:center;font-size:16px}
+  .rec .rt{flex:1}.rec .rt b{font-size:13px}.rec .rt p{font-size:11px;color:var(--sub)}
+  .seg{display:flex;gap:5px}
+  .seg button{border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;color:var(--sub);font-family:inherit}
+  .seg button.g.on{background:var(--mint);color:#fff;border-color:var(--mint)}
+  .seg button.a.on{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .seg button.c.on{background:var(--coral);color:#fff;border-color:var(--coral)}
+  .aicard{background:linear-gradient(135deg,#F3EFFB,#EAF0FB);border:1px solid #ddd5f2}
+  .aihead{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#5b4fb0;margin-bottom:10px}
+  .aihead .sp{font-size:16px}
+  .propose{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px;border:1px solid #eee}
+  .propose b{font-size:13.5px}.propose .rea{font-size:11.5px;color:var(--sub);margin-top:4px;line-height:1.5}
+  .propose .pr{float:right;color:var(--mint-d);font-weight:800;font-size:13px}
+  .draft{background:#fff;border-radius:12px;padding:14px;font-size:12.5px;line-height:1.7;color:#4a4247;border:1px solid #eee;margin-bottom:10px}
+  .btnrow{display:flex;gap:10px}
+  .btn{flex:1;padding:11px;border-radius:11px;font-weight:800;font-size:13px;border:none;cursor:pointer;font-family:inherit}
+  .btn-mint{background:var(--mint);color:#fff}.btn-ghost{background:#fff;color:var(--coral-d);border:1.5px solid var(--coral-l)}
+  .btn-ai{background:linear-gradient(135deg,#7a6fd0,#5b8def);color:#fff}
+  .cmp{display:flex;gap:10px;align-items:center}
+  .cmp .ph{flex:1;text-align:center}.cmp .ph .im{height:70px;border-radius:12px;background:linear-gradient(135deg,#fbe7d8,#f3d2bf);display:grid;place-items:center;font-size:30px}
+  .cmp .ph small{font-size:10px;color:var(--sub);display:block;margin-top:4px}.cmp .ar{color:var(--coral);font-size:18px}
+  /* AI messages */
+  .msgitem{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 3px 12px rgba(180,120,120,.07)}
+  .msgitem .q{display:flex;gap:10px;margin-bottom:12px}
+  .msgitem .q .av{width:32px;height:32px;border-radius:50%;background:#f0d4c2;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+  .msgitem .q .bub{background:#fbf1ee;border-radius:12px;padding:9px 13px;font-size:12.5px;line-height:1.5}
+  .msgitem .q .bub b{font-size:11px;color:var(--sub);display:block;margin-bottom:2px}
+  .aireply{background:linear-gradient(135deg,#F3EFFB,#EAF0FB);border:1px solid #ddd5f2;border-radius:12px;padding:12px 14px}
+  .aireply .h{font-size:11.5px;font-weight:800;color:#5b4fb0;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .aireply p{font-size:12.5px;line-height:1.6;color:#4a4247}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;transition:.35s;z-index:99;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .disc{font-size:10px;color:#b7a8ac;margin-top:8px}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--mint-d);background:#e5f2ec;padding:5px 12px;border-radius:20px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="p">🐾</span><div><b>PETORY</b><small>FOR SALON</small></div></div>
+    <nav class="nav">
+      <a class="on" data-v="dash" onclick="nav('dash')"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="pet" onclick="nav('pet')"><span class="i">📋</span>顧客カルテ・記録</a>
+      <a data-v="ai" onclick="nav('ai')"><span class="i">🤖</span>AI相談対応 <span style="margin-left:auto;background:var(--coral);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px">3</span></a>
+      <a data-v="sales" onclick="nav('sales')"><span class="i">💰</span>売上・提案実績</a>
+    </nav>
+    <div class="me"><div class="av">佐</div><div><b>佐藤 トリマー</b><small>Dyplus AZABUDAI</small></div></div>
+  </aside>
+
+  <main class="main">
+    <!-- ========= DASHBOARD ========= -->
+    <section class="view on" id="v-dash">
+      <div class="top"><div><h1>本日のダッシュボード</h1><div class="sub">2024年5月12日（日）・スタッフ3名稼働中</div></div>
+        <div class="salon"><b>Dyplus AZABUDAI</b><br>麻布台 / トリミングサロン</div></div>
+      <div class="kpis">
+        <div class="kpi"><div class="n">8</div><div class="l">本日の予約</div></div>
+        <div class="kpi"><div class="n">3</div><div class="l">ケア記録待ち</div></div>
+        <div class="kpi hi"><div class="n">5</div><div class="l">AI連絡帳 下書き済</div></div>
+        <div class="kpi"><div class="n">4</div><div class="l">連絡帳 送信済</div></div>
+        <div class="kpi hi"><div class="n">¥12,000</div><div class="l">本日の提案受注</div></div>
+      </div>
+      <div class="sec-t"><span class="b"></span>本日の予約 — 担当トリマー・状態が一目でわかる</div>
+      <div class="board">
+        <div class="appt" onclick="nav('pet')">
+          <div class="time">10:00</div><div class="pic">🐩</div>
+          <div class="who"><b>モコ ちゃん</b><span>トイプードル・2歳 / 田中様</span></div>
+          <div class="trimmer"><span class="av t1">佐</span>佐藤</div>
+          <div class="flags"><span class="flag ok">皮膚 改善</span><span class="flag warn">肉球 乾燥</span></div>
+          <div class="status"><div class="bar"><div class="fill" style="width:80%"></div></div><small>ケア記録 → 送信前</small></div>
+          <div class="aibadge">🤖 連絡帳 下書き済</div>
+        </div>
+        <div class="appt" onclick="nav('pet')">
+          <div class="time">10:30</div><div class="pic">🐕</div>
+          <div class="who"><b>そら ちゃん</b><span>柴犬・4歳 / 鈴木様</span></div>
+          <div class="trimmer"><span class="av t2">田</span>田中</div>
+          <div class="flags"><span class="flag ok">全体 良好</span></div>
+          <div class="status"><div class="bar"><div class="fill" style="width:100%"></div></div><small>連絡帳 送信済</small></div>
+          <div class="aibadge" style="background:#e5f2ec;color:var(--mint-d)">✓ 完了</div>
+        </div>
+        <div class="appt" onclick="nav('pet')">
+          <div class="time">11:15</div><div class="pic">🐩</div>
+          <div class="who"><b>ラテ ちゃん</b><span>トイプードル・1歳 / 高橋様</span></div>
+          <div class="trimmer"><span class="av t3">鈴</span>鈴木</div>
+          <div class="flags"><span class="flag al">耳 赤み</span><span class="flag warn">被毛 乾燥</span></div>
+          <div class="status"><div class="bar"><div class="fill" style="width:45%"></div></div><small>施術中</small></div>
+          <div class="aibadge" style="background:#efe6e6;color:var(--sub)">記録待ち</div>
+        </div>
+        <div class="appt" onclick="nav('pet')">
+          <div class="time">13:00</div><div class="pic">🐕‍🦺</div>
+          <div class="who"><b>マロン ちゃん</b><span>ミニチュアダックス・6歳 / 伊藤様</span></div>
+          <div class="trimmer"><span class="av t1">佐</span>佐藤</div>
+          <div class="flags"><span class="flag ok">皮膚 良好</span><span class="flag warn">歯 やや</span></div>
+          <div class="status"><div class="bar"><div class="fill" style="width:20%"></div></div><small>受付</small></div>
+          <div class="aibadge" style="background:#efe6e6;color:var(--sub)">予約</div>
+        </div>
+      </div>
+      <div class="disc">※ 担当が複数でも、色分け（トリマー）とフラグ（気になる箇所）で全頭の状態が一目で把握できます。</div>
+    </section>
+
+    <!-- ========= PET DETAIL / RECORD ========= -->
+    <section class="view" id="v-pet">
+      <span class="back" onclick="nav('dash')">← ダッシュボードに戻る</span>
+      <div class="card prof"><div class="pic">🐩</div><div><h2>モコ ちゃん <span style="font-size:12px;color:var(--sub);font-weight:600">/ 田中様</span></h2><p>トイプードル ♀ ・ 2歳2か月 ・ 2.8kg ・ 担当：佐藤</p><span class="pill">🕑 記録の目安 2〜3分</span></div></div>
+      <div class="grid2">
+        <div>
+          <div class="card">
+            <div class="sec-t" style="margin-top:0"><span class="b"></span>ケア記録（チェック式）</div>
+            <div class="rec"><div class="ri">🩹</div><div class="rt"><b>皮膚</b><p>前回：やや赤み</p></div><div class="seg"><button class="g on">良好</button><button class="a">やや</button><button class="c">気になる</button></div></div>
+            <div class="rec"><div class="ri">🧴</div><div class="rt"><b>被毛</b><p>前回：普通</p></div><div class="seg"><button class="g on">良好</button><button class="a">やや</button><button class="c">気になる</button></div></div>
+            <div class="rec"><div class="ri">🐾</div><div class="rt"><b>肉球</b><p>前回：良好</p></div><div class="seg"><button class="g">良好</button><button class="a on">やや</button><button class="c">気になる</button></div></div>
+            <div class="rec"><div class="ri">🦷</div><div class="rt"><b>歯</b><p>前回：良好</p></div><div class="seg"><button class="g on">良好</button><button class="a">やや</button><button class="c">気になる</button></div></div>
+            <div class="rec" style="border:none"><div class="ri">🐕</div><div class="rt"><b>体型</b><p>前回：良好</p></div><div class="seg"><button class="g on">良好</button><button class="a">やや</button><button class="c">気になる</button></div></div>
+          </div>
+          <div class="card">
+            <div class="sec-t" style="margin-top:0"><span class="b"></span>前回 → 今回</div>
+            <div class="cmp"><div class="ph"><div class="im">🐩</div><small>前回 04.10</small></div><div class="ar">➜</div><div class="ph"><div class="im" style="background:linear-gradient(135deg,#fde9dd,#f6d7c4)">🐩</div><small>今回 05.12</small></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card aicard">
+            <div class="aihead"><span class="sp">🤖</span>AIが提案候補を作成しました</div>
+            <div class="propose"><span class="pr">＋¥1,500</span><b>保湿ケアコース</b><div class="rea">根拠：前回比較で肉球・被毛の乾燥がやや進行。乾燥しやすい季節のため、サロンでの保湿ケアを提案します。</div></div>
+            <div class="btnrow"><button class="btn btn-mint" onclick="toast('提案を連絡帳に反映しました ✓')">この提案を採用</button><button class="btn btn-ghost" onclick="toast('見送りました')">今回は見送る</button></div>
+          </div>
+          <div class="card aicard">
+            <div class="aihead"><span class="sp">✍️</span>AIが連絡帳を下書きしました</div>
+            <div class="draft">モコちゃん、今日もおりこうにがんばってくれました🐾 気になっていた皮膚の赤みが前回より落ち着いてきていて、被毛のツヤも戻ってきました。肉球が少し乾燥してきているので、おうちでも保湿してあげると安心です。また次回、様子を見せてくださいね。<br><span style="color:#a99;font-size:11px">※ 気になる状態が続くときは、かかりつけの動物病院にご相談ください。</span></div>
+            <div class="btnrow"><button class="btn btn-ai" onclick="toast('田中様へ連絡帳を送信しました 📩（所要 約5秒）')">承認して送信</button><button class="btn btn-ghost" onclick="toast('編集モード（デモ）')">編集する</button></div>
+            <div class="disc">💡 トリマーは文章をゼロから書く必要がなく、確認して送るだけ。1件あたり数秒で完了します。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========= AI MESSAGES ========= -->
+    <section class="view" id="v-ai">
+      <div class="top"><div><h1>AI相談対応</h1><div class="sub">オーナーからの相談に、AIが返信案を下書き。トリマーは確認して送るだけ。</div></div></div>
+      <div class="pill">📵 電話対応ゼロ ・ 非同期でOK ・ 施術を中断しない</div>
+      <div class="msgitem">
+        <div class="q"><div class="av">🧑</div><div class="bub"><b>田中様（モコちゃん）</b>最近、目やにが少し増えた気がするのですが、大丈夫でしょうか？</div></div>
+        <div class="aireply"><div class="h">🤖 AIの返信案</div><p>ご相談ありがとうございます😊 季節の変わり目は出やすい時期です。前回の記録では被毛のうるおいも戻ってきているので、まずは目元をやさしく拭いて様子を見てあげてください。気になる状態が続くときは、かかりつけの動物病院にもご相談くださいね。</p></div>
+        <div class="btnrow" style="margin-top:12px"><button class="btn btn-ai" onclick="toast('返信を送信しました 📩')">この内容で送信</button><button class="btn btn-ghost" onclick="toast('編集モード（デモ）')">編集する</button></div>
+      </div>
+      <div class="msgitem">
+        <div class="q"><div class="av">🧑</div><div class="bub"><b>高橋様（ラテちゃん）</b>おすすめされた保湿シャンプー、どのくらいの頻度で使えばいいですか？</div></div>
+        <div class="aireply"><div class="h">🤖 AIの返信案</div><p>ラテちゃんの被毛タイプですと、週1〜2回を目安に使っていただくのがおすすめです。乾燥が気になる時期は、あわせて保湿ミストを併用いただくとより効果的です🐾 次回サロンでも状態を確認しますね。</p></div>
+        <div class="btnrow" style="margin-top:12px"><button class="btn btn-ai" onclick="toast('返信を送信しました 📩')">この内容で送信</button><button class="btn btn-ghost" onclick="toast('編集モード（デモ）')">編集する</button></div>
+      </div>
+      <div class="disc">※ 相談が増えても、AIが一次下書きを用意するため運営負荷は増えません。専門的・繊細な内容だけトリマーが加筆します。</div>
+    </section>
+
+    <!-- ========= SALES ========= -->
+    <section class="view" id="v-sales">
+      <div class="top"><div><h1>売上・提案実績</h1><div class="sub">データ根拠のある提案が、客単価と物販を押し上げます</div></div></div>
+      <div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi"><div class="n">¥8,400</div><div class="l">平均客単価（前月 ¥7,200）</div></div>
+        <div class="kpi hi"><div class="n">32%</div><div class="l">追加ケア提案の受注率</div></div>
+        <div class="kpi hi"><div class="n">¥184,000</div><div class="l">今月の物販レコメンド経由</div></div>
+        <div class="kpi"><div class="n">78%</div><div class="l">次回予約率</div></div>
+      </div>
+      <div class="card">
+        <div class="sec-t" style="margin-top:0"><span class="b"></span>3本柱の内訳（今月・サンプル）</div>
+        <div style="display:flex;gap:12px">
+          <div style="flex:1;background:#fdf0f1;border-radius:12px;padding:14px"><b style="color:var(--coral-d)">B1 付加価値オプション</b><div style="font-size:20px;font-weight:800;margin-top:6px">¥96,000</div><div style="font-size:11px;color:var(--sub)">保湿ケア・肉球ケア 等</div></div>
+          <div style="flex:1;background:#fbf5e6;border-radius:12px;padding:14px"><b style="color:#9a7a2e">B2 物販手数料</b><div style="font-size:20px;font-weight:800;margin-top:6px">¥27,600</div><div style="font-size:11px;color:var(--sub)">アプリ経由の継続購入</div></div>
+          <div style="flex:1;background:#eef5f0;border-radius:12px;padding:14px"><b style="color:var(--mint-d)">B3 基盤SaaS</b><div style="font-size:20px;font-weight:800;margin-top:6px">月額 ¥20,000</div><div style="font-size:11px;color:var(--sub)">会員数に応じて変動</div></div>
+        </div>
+      </div>
+      <div class="disc">※ すべて「データにもとづく根拠ある提案」。押し売りではないため受注率と満足度が両立します。</div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+  function nav(v){
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+    document.getElementById('v-'+v).classList.add('on');
+    document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+    document.querySelector('.main').scrollTop=0;
+  }
+  let tm;
+  function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(tm);tm=setTimeout(()=>e.classList.remove('show'),2400);}
+  // segmented control toggle
+  document.querySelectorAll('.seg').forEach(seg=>{seg.querySelectorAll('button').forEach(b=>{b.onclick=()=>{seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');};});});
+</script>
+</body>
+</html>
