@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PETORY for Salon（v2）</title>
+<style>
+  :root{--coral:#E88A94;--coral-d:#C56B76;--coral-l:#F7DCE0;--ink:#3B3336;--panel:#332C2F;
+    --mint:#7FBD9E;--mint-d:#548E72;--mint-l:#E3F1EA;--amber:#E6B450;--amber-l:#FBF1DC;
+    --blue:#5B8DEF;--blue-l:#E7EFFC;--blue-d:#3C6FD0;--purp:#6A5FB0;--purp-l:#EFECFA;
+    --bg:#F6EFEE;--card:#fff;--sub:#8C8288;--line:#EFE2E2;--t1:#5B8DEF;--t2:#E0894A;--t3:#8E6FD0;--warn:#D9534F}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Hiragino Kaku Gothic ProN","Meiryo",system-ui,sans-serif;background:var(--bg);color:var(--ink);height:100vh;overflow:hidden}
+  .app{display:flex;height:100vh}
+  .side{width:214px;background:var(--panel);color:#EBE2E4;display:flex;flex-direction:column;flex-shrink:0}
+  .brand{padding:20px 18px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .brand .p{font-size:22px}.brand b{font-size:19px;letter-spacing:2px}.brand small{display:block;font-size:9px;color:#b7a9ad;letter-spacing:2px}
+  .nav{padding:12px 10px;flex:1}
+  .nav a{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:11px;color:#cfc3c6;font-size:13.5px;font-weight:700;cursor:pointer;margin-bottom:3px}
+  .nav a .i{font-size:17px}.nav a.on{background:var(--coral);color:#fff}.nav a:hover:not(.on){background:rgba(255,255,255,.06)}
+  .side .me{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;font-size:12px}
+  .side .me .av{width:34px;height:34px;border-radius:50%;background:var(--t1);display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px}
+  .side .me small{display:block;color:#b7a9ad;font-size:10px}
+  .main{flex:1;overflow-y:auto;padding:20px 26px 40px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .top h1{font-size:21px}.top .sub{font-size:12px;color:var(--sub);margin-top:3px}
+  .top .salon{font-size:12px;color:var(--sub);text-align:right}.top .salon b{color:var(--ink);font-size:13px}
+  .view{display:none;animation:f .3s}.view.on{display:block}
+  @keyframes f{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:18px}
+  .kpi{background:var(--card);border-radius:13px;padding:13px 15px;box-shadow:0 4px 14px rgba(180,120,120,.08)}
+  .kpi .n{font-size:22px;font-weight:800;color:var(--coral-d)}.kpi .l{font-size:10.5px;color:var(--sub);margin-top:2px;font-weight:600}
+  .kpi.hi .n{color:var(--mint-d)}.kpi.al .n{color:var(--warn)}
+  .sec-t{font-size:14px;font-weight:800;margin:2px 0 12px;display:flex;align-items:center;gap:8px}
+  .sec-t .b{width:4px;height:16px;background:var(--coral);border-radius:2px}
+  .board{display:flex;flex-direction:column;gap:10px}
+  .appt{background:var(--card);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:15px;box-shadow:0 3px 12px rgba(180,120,120,.07);cursor:pointer;transition:.15s;border:1px solid transparent}
+  .appt:hover{transform:translateX(3px);border-color:var(--coral-l)}
+  .appt.flagged{border-left:5px solid var(--warn)}
+  .appt .time{font-size:15px;font-weight:800;width:50px;flex-shrink:0}
+  .appt .pic{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#f0d4c2);display:grid;place-items:center;font-size:22px;flex-shrink:0;border:2px solid #fff}
+  .appt .who{width:150px;flex-shrink:0}.appt .who b{font-size:14px}.appt .who span{font-size:11px;color:var(--sub);display:block}
+  .trimmer{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;width:80px;flex-shrink:0}
+  .trimmer .av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:800}
+  .t1{background:var(--t1)}.t2{background:var(--t2)}.t3{background:var(--t3)}
+  .alerts{flex:1;display:flex;gap:5px;flex-wrap:wrap}
+  .al{font-size:10.5px;padding:3px 9px;border-radius:20px;font-weight:800;display:inline-flex;gap:3px;align-items:center}
+  .al-allergy{background:var(--mint-l);color:var(--mint-d)}.al-resp{background:var(--blue-l);color:var(--blue-d)}
+  .al-dental{background:var(--amber-l);color:#9a7a2e}.al-none{background:#eee;color:var(--sub)}
+  .aibadge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:800;flex-shrink:0;white-space:nowrap}
+  .ai-draft{background:linear-gradient(135deg,#7a6fd0,#5b8def);color:#fff}.ai-done{background:var(--mint-l);color:var(--mint-d)}.ai-wait{background:#efe6e6;color:var(--sub)}
+  .back{font-size:12px;color:var(--coral-d);cursor:pointer;font-weight:700;margin-bottom:12px;display:inline-block}
+  .grid2{display:grid;grid-template-columns:1.05fr 1fr;gap:16px}
+  .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 4px 14px rgba(180,120,120,.08);margin-bottom:15px}
+  .prof{display:flex;align-items:center;gap:14px}
+  .prof .pic{width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#f0d4c2);display:grid;place-items:center;font-size:29px;border:3px solid #fff}
+  .prof h2{font-size:19px}.prof p{font-size:12px;color:var(--sub);margin-top:2px}
+  .idno{font-family:monospace;font-size:11px;color:var(--coral-d);background:var(--coral-l);padding:2px 9px;border-radius:8px;display:inline-block;margin-top:5px}
+  /* ALERT PANEL - the wow */
+  .alertpanel{background:linear-gradient(135deg,#FFF6F5,#FFEFEF);border:1.5px solid #F3C9C9;border-radius:16px;padding:16px;margin-bottom:15px}
+  .alertpanel .h{font-size:14px;font-weight:800;color:var(--warn);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .alertpanel .h .ic{font-size:18px}
+  .arow{display:flex;gap:12px;padding:11px 12px;background:#fff;border-radius:12px;margin-bottom:9px;border:1px solid #f0e0e0}
+  .arow .e{font-size:22px;flex-shrink:0}
+  .arow .c b{font-size:13px;display:block;margin-bottom:2px}
+  .arow.allergy b{color:var(--mint-d)}.arow.resp b{color:var(--blue-d)}.arow.dental b{color:#9a7a2e}
+  .arow .c p{font-size:11.5px;color:#5c5257;line-height:1.5}
+  .arow .c .do{font-size:11px;font-weight:800;margin-top:4px;display:inline-block;padding:2px 9px;border-radius:20px}
+  .allergy .do{background:var(--mint-l);color:var(--mint-d)}.resp .do{background:var(--blue-l);color:var(--blue-d)}.dental .do{background:var(--amber-l);color:#9a7a2e}
+  .rec{display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--line)}
+  .rec .ri{width:34px;height:34px;border-radius:10px;background:#fdf5f2;display:grid;place-items:center;font-size:16px}
+  .rec .rt{flex:1}.rec .rt b{font-size:13px}.rec .rt p{font-size:10.5px;color:var(--sub)}
+  .seg{display:flex;gap:5px}
+  .seg button{border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:5px 9px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--sub);font-family:inherit}
+  .seg button.g.on{background:var(--mint);color:#fff;border-color:var(--mint)}
+  .seg button.a.on{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .seg button.c.on{background:var(--coral);color:#fff;border-color:var(--coral)}
+  .aicard{background:linear-gradient(135deg,#F3EFFB,#EAF0FB);border:1px solid #ddd5f2}
+  .aihead{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#5b4fb0;margin-bottom:10px}
+  .prodsel{background:#fff;border-radius:12px;padding:12px 13px;margin-bottom:9px;border:1px solid #eee;display:flex;gap:11px;align-items:center}
+  .prodsel .pi{width:42px;height:42px;border-radius:10px;background:#fdf5f2;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+  .prodsel .pt{flex:1}.prodsel .pt b{font-size:13px}.prodsel .pt .why{font-size:10.5px;color:var(--sub);margin-top:2px;line-height:1.4}
+  .prodsel .pt .auto{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:20px;display:inline-block;margin-top:4px}
+  .a-al{background:var(--mint-l);color:var(--mint-d)}.a-br{background:var(--blue-l);color:var(--blue-d)}
+  .prodsel .pr{color:var(--mint-d);font-weight:800;font-size:13px;white-space:nowrap}
+  .draft{background:#fff;border-radius:12px;padding:13px;font-size:12px;line-height:1.7;color:#4a4247;border:1px solid #eee;margin-bottom:10px}
+  .draft .hl{background:#FDF0F2;border-radius:4px;padding:0 3px;font-weight:700;color:var(--coral-d)}
+  .btnrow{display:flex;gap:10px}
+  .btn{flex:1;padding:11px;border-radius:11px;font-weight:800;font-size:13px;border:none;cursor:pointer;font-family:inherit}
+  .btn-mint{background:var(--mint);color:#fff}.btn-ghost{background:#fff;color:var(--coral-d);border:1.5px solid var(--coral-l)}
+  .btn-ai{background:linear-gradient(135deg,#7a6fd0,#5b8def);color:#fff}
+  .datacard{background:linear-gradient(135deg,#F3EFFB,#F7EFF9);border:1px solid #e0d3ee;border-radius:14px;padding:15px}
+  .datacard .h{font-size:13px;font-weight:800;color:var(--purp);display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .datarow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed #e0d3ee;font-size:12px}
+  .datarow:last-child{border:none}.datarow b{color:var(--ink)}.datarow .v{font-weight:800;color:var(--purp)}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;transition:.35s;z-index:99;box-shadow:0 10px 30px rgba(0,0,0,.3);text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .disc{font-size:10px;color:#b7a8ac;margin-top:8px}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--mint-d);background:var(--mint-l);padding:5px 12px;border-radius:20px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="p">🐾</span><div><b>PETORY</b><small>FOR SALON</small></div></div>
+    <nav class="nav">
+      <a class="on" data-v="dash" onclick="nav('dash')"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="pet" onclick="nav('pet')"><span class="i">📋</span>カルテ・記録</a>
+      <a data-v="ai" onclick="nav('ai')"><span class="i">🤖</span>AI相談対応 <span style="margin-left:auto;background:var(--coral);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px">2</span></a>
+      <a data-v="data" onclick="nav('data')"><span class="i">🔬</span>データ活用</a>
+    </nav>
+    <div class="me"><div class="av">佐</div><div><b>佐藤 トリマー</b><small>Dyplus AZABUDAI</small></div></div>
+  </aside>
+  <main class="main">
+    <!-- DASHBOARD -->
+    <section class="view on" id="v-dash">
+      <div class="top"><div><h1>本日のダッシュボード</h1><div class="sub">2024年5月12日（日）・スタッフ3名稼働中</div></div>
+        <div class="salon"><b>Dyplus AZABUDAI</b><br>麻布台 / トリミングサロン</div></div>
+      <div class="kpis">
+        <div class="kpi"><div class="n">8</div><div class="l">本日の予約</div></div>
+        <div class="kpi al"><div class="n">3</div><div class="l">要配慮（健康フラグ）</div></div>
+        <div class="kpi hi"><div class="n">5</div><div class="l">AI連絡帳 下書き済</div></div>
+        <div class="kpi"><div class="n">4</div><div class="l">連絡帳 送信済</div></div>
+        <div class="kpi hi"><div class="n">¥16,500</div><div class="l">本日の提案受注</div></div>
+      </div>
+      <div class="sec-t"><span class="b"></span>本日の予約 — うちのこIDの健康フラグが“入店前に”わかる</div>
+      <div class="board">
+        <div class="appt flagged" onclick="nav('pet')">
+          <div class="time">10:00</div><div class="pic">🐩</div>
+          <div class="who"><b>モコ ちゃん</b><span>トイプードル・2歳 / 田中様</span></div>
+          <div class="trimmer"><span class="av t1">佐</span>佐藤</div>
+          <div class="alerts"><span class="al al-allergy">🌿 アレルギー</span><span class="al al-resp">🫁 気管支ケア注意</span><span class="al al-dental">🦷 デンタル敏感</span></div>
+          <div class="aibadge ai-draft">🤖 連絡帳 下書き済</div>
+        </div>
+        <div class="appt" onclick="nav('pet')">
+          <div class="time">10:30</div><div class="pic">🐕</div>
+          <div class="who"><b>そら ちゃん</b><span>柴犬・4歳 / 鈴木様</span></div>
+          <div class="trimmer"><span class="av t2">田</span>田中</div>
+          <div class="alerts"><span class="al al-none">特記なし</span></div>
+          <div class="aibadge ai-done">✓ 完了</div>
+        </div>
+        <div class="appt flagged" onclick="nav('pet')">
+          <div class="time">11:15</div><div class="pic">🐩</div>
+          <div class="who"><b>ラテ ちゃん</b><span>トイプードル・1歳 / 高橋様</span></div>
+          <div class="trimmer"><span class="av t3">鈴</span>鈴木</div>
+          <div class="alerts"><span class="al al-allergy">🌿 アレルギー（穀物）</span><span class="al al-dental">🦷 歯みがき苦手</span></div>
+          <div class="aibadge ai-wait">記録待ち</div>
+        </div>
+        <div class="appt" onclick="nav('pet')">
+          <div class="time">13:00</div><div class="pic">🐕‍🦺</div>
+          <div class="who"><b>マロン ちゃん</b><span>ダックス・6歳 / 伊藤様</span></div>
+          <div class="trimmer"><span class="av t1">佐</span>佐藤</div>
+          <div class="alerts"><span class="al al-resp">🫁 高齢・呼吸注意</span></div>
+          <div class="aibadge ai-wait">予約</div>
+        </div>
+      </div>
+      <div class="disc">※ 担当が複数でも、健康フラグ（アレルギー・気管支・デンタル 等）を入店前に共有。“知らずに触ってしまう”を防ぎます。</div>
+    </section>
+
+    <!-- PET DETAIL -->
+    <section class="view" id="v-pet">
+      <span class="back" onclick="nav('dash')">← ダッシュボードに戻る</span>
+      <div class="card prof"><div class="pic">🐩</div><div><h2>モコ ちゃん <span style="font-size:12px;color:var(--sub);font-weight:600">/ 田中様</span></h2><p>トイプードル ♀ ・ 2歳2か月 ・ 2.8kg ・ 担当：佐藤</p><span class="idno">ID: PS-2024-MOCO-0412</span></div></div>
+
+      <!-- THE WOW: alert panel -->
+      <div class="alertpanel">
+        <div class="h"><span class="ic">⚠️</span>ケア注意 — このワンちゃんの大切な情報（治療ではなく“配慮”のために）</div>
+        <div class="arow allergy"><span class="e">🌿</span><div class="c"><b>アレルギー：鶏・特定のシャンプー成分</b><p>刺激の少ない成分でケアします。</p><span class="do">→ 低刺激シャンプーをAIが自動選択</span></div></div>
+        <div class="arow resp"><span class="e">🫁</span><div class="c"><b>気管支が弱い（喘息傾向）</b><p>興奮・首元の圧迫で咳・ぜぇぜぇが出やすい。</p><span class="do">→ 呼吸を見ながら・首元やさしく・短時間で</span></div></div>
+        <div class="arow dental"><span class="e">🦷</span><div class="c"><b>歯が敏感</b><p>強く触れると嫌がることがある。</p><span class="do">→ デンタルはやさしく、無理のない範囲で</span></div></div>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <div class="card">
+            <div class="sec-t" style="margin-top:0"><span class="b"></span>観察記録（チェック式・2〜3分）</div>
+            <div class="rec"><div class="ri">🩹</div><div class="rt"><b>皮膚</b><p>前回：やや赤み</p></div><div class="seg"><button class="g on">良好</button><button class="a">やや</button><button class="c">気になる</button></div></div>
+            <div class="rec"><div class="ri">🐾</div><div class="rt"><b>肉球</b><p>前回：良好</p></div><div class="seg"><button class="g">良好</button><button class="a on">やや</button><button class="c">気になる</button></div></div>
+            <div class="rec"><div class="ri">🫁</div><div class="rt"><b>呼吸（気管支）</b><p>施術中の様子</p></div><div class="seg"><button class="g on">落ち着き</button><button class="a">やや</button><button class="c">ぜぇぜぇ</button></div></div>
+            <div class="rec"><div class="ri">🦷</div><div class="rt"><b>歯</b><p>やさしくチェック</p></div><div class="seg"><button class="g on">良好</button><button class="a">やや</button><button class="c">気になる</button></div></div>
+            <div class="rec" style="border:none"><div class="ri">🌿</div><div class="rt"><b>アレルギー反応</b><p>低刺激シャンプー使用</p></div><div class="seg"><button class="g on">なし</button><button class="a">やや</button><button class="c">あり</button></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card aicard">
+            <div class="aihead"><span style="font-size:16px">🤖</span>AIが“この子に合う”製品を自動セレクト</div>
+            <div class="prodsel"><div class="pi">🧴</div><div class="pt"><b>低刺激 保湿シャンプー</b><div class="why">アレルギー成分を避けて自動選択。施術に使用＆自宅用も提案可。</div><span class="auto a-al">🌿 アレルギーに合わせて自動選択</span></div></div>
+            <div class="prodsel"><div class="pi">💨</div><div class="pt"><b>気管支ケア 保湿ミスト</b><div class="why">呼吸まわりのケア。乾燥しやすい季節に。<span class="pr">＋¥1,800</span></div><span class="auto a-br">🫁 気管支プロフィールに基づく提案</span></div></div>
+            <div class="btnrow"><button class="btn btn-mint" onclick="toast('提案を連絡帳に反映しました ✓')">提案を採用</button><button class="btn btn-ghost" onclick="toast('見送りました')">見送る</button></div>
+          </div>
+          <div class="card aicard">
+            <div class="aihead"><span style="font-size:16px">✍️</span>AIが連絡帳を下書きしました</div>
+            <div class="draft">モコちゃん、今日もおりこうにがんばってくれました🐾 <span class="hl">アレルギーに配慮した低刺激シャンプー</span>でケアしています。トリミング中は<span class="hl">呼吸が乱れないよう首元をやさしく</span>、こまめに様子を見ました。<span class="hl">ぜぇぜぇも見られず落ち着いて</span>いましたよ。皮膚の赤みも前回より落ち着いてきています。
+            <br><span style="color:#a99;font-size:10.5px">※ 気になる状態が続くときは、かかりつけの動物病院にご相談ください。</span></div>
+            <div class="btnrow"><button class="btn btn-ai" onclick="toast('田中様へ連絡帳を送信しました 📩（所要 約5秒）')">承認して送信</button><button class="btn btn-ghost" onclick="toast('編集モード（デモ）')">編集</button></div>
+            <div class="disc">💡 健康情報に配慮した内容まで、AIが自動で下書き。トリマーは確認して送るだけ。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI messages -->
+    <section class="view" id="v-ai">
+      <div class="top"><div><h1>AI相談対応</h1><div class="sub">健康プロフィールを踏まえた返信案をAIが下書き。電話対応ゼロ・非同期でOK。</div></div></div>
+      <div class="pill">📵 電話対応ゼロ ・ 施術を中断しない</div>
+      <div class="card" style="margin-top:14px">
+        <div style="display:flex;gap:10px;margin-bottom:12px"><div style="width:32px;height:32px;border-radius:50%;background:#f0d4c2;display:grid;place-items:center;font-size:15px">🧑</div>
+          <div style="background:#fbf1ee;border-radius:12px;padding:9px 13px;font-size:12.5px;line-height:1.5"><b style="font-size:11px;color:var(--sub);display:block;margin-bottom:2px">田中様（モコちゃん）</b>最近、興奮するとぜぇぜぇしやすい気がして…トリミング大丈夫でしたか？</div></div>
+        <div class="aicard" style="border-radius:12px;padding:12px 14px"><div class="aihead" style="margin-bottom:6px;font-size:11.5px">🤖 AIの返信案（気管支プロフィールを反映）</div>
+          <p style="font-size:12.5px;line-height:1.6;color:#4a4247">気管支のこと、プロフィールで拝見しています🐾 今日は呼吸を見ながら、首元をやさしく短時間で進めました。施術中もぜぇぜぇは見られず落ち着いていましたよ。もし咳が続くようなら、かかりつけの動物病院にもご相談くださいね。</p></div>
+        <div class="btnrow" style="margin-top:12px"><button class="btn btn-ai" onclick="toast('返信を送信しました 📩')">この内容で送信</button><button class="btn btn-ghost" onclick="toast('編集モード（デモ）')">編集</button></div>
+      </div>
+      <div class="disc">※ 相談が増えても、健康情報に配慮した一次下書きをAIが用意。運営負荷は増えません。</div>
+    </section>
+
+    <!-- DATA -->
+    <section class="view" id="v-data">
+      <div class="top"><div><h1>データ活用（CVL / 共立製薬）</h1><div class="sub">同意ベース・匿名化。“発症前の気づき”が、次のケア用品づくりへ</div></div></div>
+      <div class="datacard" style="margin-bottom:15px">
+        <div class="h"><span style="font-size:16px">🔬</span>蓄積される“発症前データ”（例）</div>
+        <div class="datarow"><b>🌿 アレルギー × 使用製品 × 反応</b><span class="v">低刺激シャンプー → 反応なし</span></div>
+        <div class="datarow"><b>🫁 気管支コンディション × 環境・季節</b><span class="v">春先に咳サインが増加傾向</span></div>
+        <div class="datarow"><b>🦷 デンタル状態 × ケア継続率</b><span class="v">やさしいジェルで継続率↑</span></div>
+        <div class="datarow"><b>🐾 皮膚・被毛 × 製品 × 経過</b><span class="v">保湿ケアで赤み改善の相関</span></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="sec-t" style="margin-top:0"><span class="b"></span>なぜCVLに価値があるか</div>
+          <p style="font-size:12px;line-height:1.7;color:#4a4247">動物病院には“発症してから”しか集まらないデータが、サロンでは<b>「まだ元気なうち＝発症前」</b>から継続的に集まります。アレルギー・皮膚・呼吸器・デンタルの<b>「状態 × 製品 × 経過」</b>は、共立製薬の<b>製品開発・需要予測・エビデンス</b>に直結します。</p></div>
+        <div class="card"><div class="sec-t" style="margin-top:0"><span class="b"></span>守り（安全・同意）</div>
+          <ul style="font-size:12px;line-height:1.9;color:#4a4247;padding-left:18px">
+            <li>オーナーのオプトイン同意が前提</li>
+            <li>個体を特定しない匿名・統計データ</li>
+            <li>写真そのものは第三者提供しない</li>
+            <li>PETORYは診断・治療をしない（非医療）</li>
+          </ul></div>
+      </div>
+      <div class="disc">※ このデータ活用は「治療」ではなく、「認識して、丁寧に見守り、より良いケア用品につなげる」ためのものです。</div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+  function nav(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');
+    document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));document.querySelector('.main').scrollTop=0;}
+  let tm;function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(tm);tm=setTimeout(()=>e.classList.remove('show'),2500);}
+  document.querySelectorAll('.seg').forEach(seg=>seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');}));
+</script>
+</body>
+</html>

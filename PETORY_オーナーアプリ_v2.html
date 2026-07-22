@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PETORY オーナーアプリ（v2）</title>
+<style>
+  :root{--coral:#E88A94;--coral-d:#C56B76;--coral-l:#F7DCE0;--mint:#7FBD9E;--mint-d:#548E72;--mint-l:#E3F1EA;
+    --amber:#E6B450;--amber-l:#FBF1DC;--blue:#5B8DEF;--blue-l:#E7EFFC;--blue-d:#3C6FD0;
+    --bg:#FBF3F1;--card:#fff;--ink:#3B3336;--sub:#8C8288;--line:#F0E4E4;--shadow:0 8px 24px rgba(180,120,120,.14)}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:"Hiragino Kaku Gothic ProN","Meiryo",system-ui,sans-serif;background:linear-gradient(135deg,#F5E6E8,#EAF2EE);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 12px;color:var(--ink)}
+  .brandbar{display:flex;align-items:center;gap:10px;color:var(--coral-d)}
+  .brandbar .paw{font-size:24px}.brandbar b{font-size:22px;letter-spacing:3px;font-weight:800}
+  .brandbar span{font-size:12px;color:var(--sub)}
+  .hint{font-size:12px;color:#6b6b6b;background:#fff;border:1px solid var(--line);border-radius:20px;padding:6px 14px;box-shadow:var(--shadow);text-align:center}
+  .phone{width:392px;max-width:96vw;height:812px;max-height:88vh;background:var(--bg);border-radius:44px;
+    box-shadow:0 24px 60px rgba(150,100,110,.35),inset 0 0 0 10px #1f1b1d,inset 0 0 0 13px #333;overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#1f1b1d;border-radius:0 0 16px 16px;z-index:30}
+  .status{height:44px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 4px;font-size:12px;font-weight:600;z-index:20}
+  .appbar{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px}
+  .appbar .logo{display:flex;align-items:center;gap:6px;color:var(--coral-d);font-weight:800;letter-spacing:2px}
+  .appbar .logo .paw{font-size:18px}.appbar .icons{color:var(--sub);font-size:16px;display:flex;gap:12px}
+  .screen{flex:1;overflow-y:auto;padding:2px 15px 92px}.screen::-webkit-scrollbar{width:0}
+  .view{display:none;animation:fade .35s}.view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card{background:var(--card);border-radius:20px;padding:15px;box-shadow:var(--shadow);margin-bottom:13px;border:1px solid #fbeeee}
+  .sec-t{font-size:13px;font-weight:800;margin:2px 0 11px;display:flex;align-items:center;gap:7px}
+  .sec-t .bar{width:4px;height:15px;background:var(--coral);border-radius:2px}
+  /* ID card */
+  .idcard{background:linear-gradient(135deg,#C56B76,#E88A94);color:#fff;border-radius:20px;padding:16px 18px;box-shadow:0 10px 24px rgba(197,107,118,.4);position:relative;overflow:hidden;margin-bottom:13px}
+  .idcard::after{content:"🐾";position:absolute;right:-6px;bottom:-14px;font-size:80px;opacity:.13}
+  .idcard .lab{font-size:10px;letter-spacing:2px;opacity:.85;font-weight:700}
+  .idcard .row{display:flex;align-items:center;gap:13px;margin-top:8px}
+  .idcard .pic{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center;font-size:30px;border:3px solid rgba(255,255,255,.7)}
+  .idcard h2{font-size:20px}.idcard .meta{font-size:11.5px;opacity:.9;margin-top:2px}
+  .idcard .no{font-family:monospace;font-size:12.5px;letter-spacing:1px;margin-top:11px;background:rgba(255,255,255,.18);display:inline-block;padding:4px 12px;border-radius:8px}
+  /* condition chips */
+  .conds{display:flex;flex-direction:column;gap:8px}
+  .cond{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:13px;border:1.5px solid}
+  .cond .e{font-size:22px}.cond .t{flex:1}.cond .t b{font-size:13.5px;display:block}.cond .t span{font-size:11px;color:var(--sub)}
+  .cond.al{background:var(--mint-l);border-color:#bfe0cf}.cond.al b{color:var(--mint-d)}
+  .cond.br{background:var(--blue-l);border-color:#c7d9f5}.cond.br b{color:var(--blue-d)}
+  .cond.de{background:var(--amber-l);border-color:#eeddb8}.cond.de b{color:#9a7a2e}
+  /* salon acknowledgment */
+  .ack{background:linear-gradient(135deg,#EAF2EE,#E3F1EA);border:1px solid #cfe6da;border-radius:16px;padding:14px;margin-bottom:13px}
+  .ack .h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--mint-d);margin-bottom:8px}
+  .ack .h .b{font-size:18px}
+  .ack p{font-size:12px;line-height:1.6;color:#4a5c52}
+  .ack .chk{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+  .ack .chk span{font-size:10.5px;background:#fff;color:var(--mint-d);border:1px solid #cfe6da;padding:4px 10px;border-radius:20px;font-weight:700}
+  /* condition row (today) */
+  .cline{display:flex;justify-content:space-between;text-align:center;gap:4px}
+  .cline .it{flex:1}.cline .ic{width:42px;height:42px;margin:0 auto 4px;border-radius:13px;display:grid;place-items:center;font-size:19px;background:#fff;border:1.5px solid var(--line)}
+  .cline .lb{font-size:10px;color:var(--sub);font-weight:600}.dot{width:8px;height:8px;border-radius:50%;margin:4px auto 0}
+  .g{background:var(--mint)}.a{background:var(--amber)}.c{background:var(--coral)}
+  /* note */
+  .note{background:linear-gradient(135deg,#FDF6F3,#FBEFEA)}
+  .note .ph{display:flex;gap:10px;align-items:center;margin-bottom:11px}
+  .note .ph .im{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#fbe7d8,#f3d2bf);display:grid;place-items:center;font-size:26px}
+  .note .ph .by{font-size:11px;color:var(--sub)}.note .ph .by b{color:var(--ink);font-size:12.5px}
+  .note .body{font-size:12.5px;line-height:1.75;color:#4a4247}
+  .note .tags{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .note .tags span{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700}
+  .tg-al{background:var(--mint-l);color:var(--mint-d)}.tg-br{background:var(--blue-l);color:var(--blue-d)}.tg-de{background:var(--amber-l);color:#9a7a2e}
+  /* product rec */
+  .prod{display:flex;gap:11px;align-items:center;padding:11px;border-radius:14px;border:1px solid var(--line);margin-bottom:9px;background:#fff}
+  .prod .pi{width:50px;height:50px;border-radius:12px;background:#fdf5f2;display:grid;place-items:center;font-size:24px;flex-shrink:0}
+  .prod .pt{flex:1}.prod .pt b{font-size:13px}.prod .pt .why{font-size:10.5px;color:var(--sub);margin-top:3px;line-height:1.4}
+  .prod .pt .match{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:5px}
+  .m-al{background:var(--mint-l);color:var(--mint-d)}.m-br{background:var(--blue-l);color:var(--blue-d)}.m-de{background:var(--amber-l);color:#9a7a2e}
+  .prod .buy{font-size:11px;font-weight:800;color:var(--coral-d);background:#fff;border:1.5px solid var(--coral-l);border-radius:10px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+  /* linking */
+  .link{display:flex;align-items:center;gap:11px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  .link .li{width:38px;height:38px;border-radius:11px;background:#fdf5f2;display:grid;place-items:center;font-size:18px}
+  .link .lt{flex:1}.link .lt b{font-size:13px}.link .lt p{font-size:10.5px;color:var(--sub)}
+  .toggle{width:44px;height:25px;border-radius:20px;background:var(--mint);position:relative;cursor:pointer;flex-shrink:0}
+  .toggle.off{background:#d8cfcf}.toggle::after{content:"";position:absolute;top:3px;left:22px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .toggle.off::after{left:3px}
+  /* chat */
+  .chat{display:flex;flex-direction:column;gap:10px;padding-top:4px}
+  .msg{max-width:80%;padding:10px 13px;border-radius:16px;font-size:12.5px;line-height:1.5}
+  .msg.them{background:#fff;border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:5px}
+  .msg.me{background:var(--coral);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
+  .msg .who{font-size:10px;color:var(--sub);margin-bottom:3px;font-weight:700}
+  .chat-in{position:absolute;bottom:74px;left:14px;right:14px;display:flex;gap:8px;background:#fff;border-radius:24px;padding:6px 6px 6px 16px;box-shadow:var(--shadow);border:1px solid var(--line)}
+  .chat-in input{flex:1;border:none;outline:none;font-size:13px;background:transparent;font-family:inherit}
+  .chat-in button{width:38px;height:38px;border-radius:50%;border:none;background:var(--coral);color:#fff;font-size:16px;cursor:pointer}
+  /* story */
+  .albgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .albgrid .t{aspect-ratio:1;border-radius:14px;background:linear-gradient(135deg,#fbe7d8,#f0cdb8);display:grid;place-items:center;font-size:30px;position:relative}
+  .albgrid .t span{position:absolute;bottom:5px;right:6px;font-size:9px;color:#a98;background:rgba(255,255,255,.7);border-radius:6px;padding:1px 4px}
+  .month{font-size:12px;font-weight:800;color:var(--coral-d);margin:6px 0 8px;display:flex;align-items:center;gap:6px}
+  .month::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--coral)}
+  .nav{position:absolute;bottom:0;left:0;right:0;height:66px;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding-bottom:6px;z-index:25}
+  .nav a{flex:1;text-align:center;color:var(--sub);font-size:9.5px;cursor:pointer;font-weight:700}
+  .nav a .ni{font-size:19px;display:block;margin-bottom:2px;filter:grayscale(1);opacity:.6}
+  .nav a.on{color:var(--coral-d)}.nav a.on .ni{filter:none;opacity:1}
+  .toast{position:absolute;top:70px;left:50%;transform:translateX(-50%) translateY(-16px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:22px;font-size:12px;font-weight:700;opacity:0;transition:.4s;z-index:40;box-shadow:0 8px 20px rgba(0,0,0,.3);white-space:nowrap;max-width:88%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .disc{font-size:9.5px;color:#b7a8ac;text-align:left;padding:4px 0 0}
+  .data-note{background:#F3EFFB;border:1px solid #ddd5f2;border-radius:12px;padding:10px 12px;font-size:10.5px;color:#5b4fb0;line-height:1.5;margin-top:4px}
+  .foot{font-size:10px;color:#b7a;text-align:center;padding:4px 0 0}
+</style>
+</head>
+<body>
+  <div class="brandbar"><span class="paw">🐾</span><b>PETORY</b><span>うちの子の“今”を、ありのまま記録して、より良いケアへ</span></div>
+  <div class="hint">👇 オーナーアプリ（v2）。うちのこID・健康プロフィールに、サロンが“配慮”で応えます。下のタブで体験できます。</div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="status"><span>9:41</span><span>🔋 100%</span></div>
+    <div class="appbar"><div class="logo"><span class="paw">🐾</span>PETORY</div><div class="icons"><span>🔔</span><span>🧑</span></div></div>
+    <div class="toast" id="toast"></div>
+    <div class="screen" id="screen">
+
+      <!-- ===== HOME ===== -->
+      <section class="view active" id="v-home">
+        <div class="idcard">
+          <div class="lab">うちのこID ・ PET+STORY ID</div>
+          <div class="row"><div class="pic">🐩</div><div><h2>モコ ♀</h2><div class="meta">トイプードル ・ 2歳2か月 ・ 2.8kg</div></div></div>
+          <div class="no">PS-2024-MOCO-0412</div>
+        </div>
+
+        <div class="card">
+          <div class="sec-t"><span class="bar"></span>気をつけてほしいこと（健康プロフィール）</div>
+          <div class="conds">
+            <div class="cond al"><span class="e">🌿</span><div class="t"><b>アレルギー</b><span>鶏肉・特定のシャンプー成分 → 低刺激ケアが必要</span></div></div>
+            <div class="cond br"><span class="e">🫁</span><div class="t"><b>気管支が弱い（喘息傾向）</b><span>興奮で咳・ぜぇぜぇ。首元の圧迫に注意</span></div></div>
+            <div class="cond de"><span class="e">🦷</span><div class="t"><b>歯が敏感</b><span>デンタルケアはやさしく</span></div></div>
+          </div>
+          <div class="disc">※ 治療のためではなく、“知っておいてもらう”ための情報です。診断ではありません。</div>
+        </div>
+
+        <div class="ack">
+          <div class="h"><span class="b">💚</span>Dyplus AZABUDAI が配慮しています</div>
+          <p>モコちゃんのアレルギー・気管支・歯の情報を、担当トリマーが確認したうえでケアにあたっています。</p>
+          <div class="chk"><span>✓ 低刺激シャンプーを選択</span><span>✓ 呼吸を見ながら施術</span><span>✓ 首元やさしく</span><span>✓ デンタルは慎重に</span></div>
+        </div>
+
+        <div class="card">
+          <div class="sec-t"><span class="bar"></span>今日のコンディション</div>
+          <div class="cline">
+            <div class="it"><div class="ic">🩹</div><div class="lb">皮膚</div><div class="dot g"></div></div>
+            <div class="it"><div class="ic">🧴</div><div class="lb">被毛</div><div class="dot g"></div></div>
+            <div class="it"><div class="ic">🐾</div><div class="lb">肉球</div><div class="dot a"></div></div>
+            <div class="it"><div class="ic">🦷</div><div class="lb">歯</div><div class="dot g"></div></div>
+            <div class="it"><div class="ic">🫁</div><div class="lb">呼吸</div><div class="dot g"></div></div>
+          </div>
+        </div>
+
+        <div class="card note">
+          <div class="sec-t" style="margin-top:0"><span class="bar"></span>サロンからの連絡帳</div>
+          <div class="ph"><div class="im">🐩</div><div class="by"><b>担当トリマー・さとう</b><br>2024.05.12</div></div>
+          <div class="body">モコちゃん、今日もおりこうにがんばってくれました🐾 アレルギーに配慮して<b>低刺激シャンプー</b>でケアしています。トリミング中は<b>呼吸が乱れないよう首元をやさしく</b>、こまめに様子を見ました。ぜぇぜぇも見られず落ち着いていましたよ。皮膚の赤みも前回より落ち着いてきています。</div>
+          <div class="tags"><span class="tg-al">🌿 低刺激シャンプー使用</span><span class="tg-br">🫁 呼吸 落ち着き</span><span class="tg-de">🦷 デンタル 慎重に</span></div>
+        </div>
+
+        <div class="card">
+          <div class="sec-t"><span class="bar"></span>モコちゃんに合わせたケア用品</div>
+          <div class="prod"><div class="pi">🧴</div><div class="pt"><b>低刺激 保湿シャンプー</b><div class="why">アレルギーに配慮した成分。ご自宅ケアにも安心。</div><span class="match m-al">🌿 アレルギーに合わせて</span></div><div class="buy" onclick="feedback()">見る</div></div>
+          <div class="prod"><div class="pi">💨</div><div class="pt"><b>気管支ケア 保湿ミスト</b><div class="why">乾燥しやすい季節に。のど・呼吸まわりをやさしくケア。</div><span class="match m-br">🫁 気管支ケアに</span></div><div class="buy" onclick="feedback()">見る</div></div>
+          <div class="prod"><div class="pi">🦷</div><div class="pt"><b>やさしいデンタルジェル</b><div class="why">敏感な歯ぐきにも。無理なく続けられる。</div><span class="match m-de">🦷 デンタルに</span></div><div class="buy" onclick="feedback()">見る</div></div>
+          <div class="disc">※ その子の状態に合わせた提案です。買う・買わないは自由に選べます。</div>
+        </div>
+      </section>
+
+      <!-- ===== ID / 連携 ===== -->
+      <section class="view" id="v-id">
+        <div class="idcard">
+          <div class="lab">うちのこID ・ PET+STORY ID</div>
+          <div class="row"><div class="pic">🐩</div><div><h2>モコ ♀</h2><div class="meta">このIDが、モコちゃんと一緒にどこへでも</div></div></div>
+          <div class="no">PS-2024-MOCO-0412</div>
+        </div>
+        <div class="card">
+          <div class="sec-t"><span class="bar"></span>健康プロフィール（あなたが登録）</div>
+          <div class="conds">
+            <div class="cond al"><span class="e">🌿</span><div class="t"><b>アレルギー</b><span>鶏肉・特定のシャンプー成分</span></div><span style="font-size:16px">✏️</span></div>
+            <div class="cond br"><span class="e">🫁</span><div class="t"><b>気管支が弱い（喘息傾向）</b><span>首元の圧迫・興奮に注意</span></div><span style="font-size:16px">✏️</span></div>
+            <div class="cond de"><span class="e">🦷</span><div class="t"><b>歯が敏感</b><span>デンタルはやさしく</span></div><span style="font-size:16px">✏️</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec-t"><span class="bar"></span>IDを共有する連携先（あなたが選ぶ）</div>
+          <div class="link"><div class="li">✂️</div><div class="lt"><b>Dyplus AZABUDAI（サロン）</b><p>ケアに健康情報を反映</p></div><div class="toggle" onclick="tog(this)"></div></div>
+          <div class="link"><div class="li">🏥</div><div class="lt"><b>かかりつけ動物病院</b><p>気になる時に状態を共有</p></div><div class="toggle off" onclick="tog(this)"></div></div>
+          <div class="link"><div class="li">🏨</div><div class="lt"><b>ペットホテル</b><p>預ける時も同じ配慮を</p></div><div class="toggle off" onclick="tog(this)"></div></div>
+          <div class="link" style="border:none"><div class="li">🛡️</div><div class="lt"><b>ペット保険</b><p>継続記録を手続きに活用</p></div><div class="toggle off" onclick="tog(this)"></div></div>
+          <div class="data-note">🔒 共有はあなたの同意した相手だけ。オフにいつでも戻せます。匿名化された傾向データは、あなたの同意のもと、より良いケア用品づくりに役立てられます。</div>
+        </div>
+      </section>
+
+      <!-- ===== 連絡帳/カルテ ===== -->
+      <section class="view" id="v-note">
+        <h3 style="font-size:17px;margin:6px 0 3px">コンディション記録</h3>
+        <p style="font-size:11.5px;color:var(--sub);margin-bottom:12px">2024.05.12 のサロン観察データ</p>
+        <div class="card" style="padding:6px 15px">
+          <div class="link"><div class="li">🩹</div><div class="lt"><b>皮膚</b><p>赤みが落ち着いてきました</p></div><b style="color:var(--mint-d);font-size:12px">良好 ○</b></div>
+          <div class="link"><div class="li">🐾</div><div class="lt"><b>肉球</b><p>乾燥がやや気になります</p></div><b style="color:var(--amber);font-size:12px">やや △</b></div>
+          <div class="link"><div class="li">🫁</div><div class="lt"><b>呼吸（気管支）</b><p>施術中も落ち着いていました。ぜぇぜぇなし</p></div><b style="color:var(--mint-d);font-size:12px">良好 ○</b></div>
+          <div class="link"><div class="li">🦷</div><div class="lt"><b>歯</b><p>やさしくチェック。きれいに保てています</p></div><b style="color:var(--mint-d);font-size:12px">良好 ○</b></div>
+          <div class="link" style="border:none"><div class="li">🌿</div><div class="lt"><b>アレルギー反応</b><p>低刺激シャンプー使用。反応なし</p></div><b style="color:var(--mint-d);font-size:12px">なし ○</b></div>
+        </div>
+        <div class="ack"><div class="h"><span class="b">🩺</span>丁寧に見ています（治療ではありません）</div><p>PETORYは診断・治療をしません。“いつもと違う”に早く気づき、サロンでのケアと、かかりつけ医への相談に役立てます。</p></div>
+      </section>
+
+      <!-- ===== 相談 ===== -->
+      <section class="view" id="v-chat">
+        <h3 style="font-size:17px;margin:6px 0 3px">相談チャット</h3>
+        <p style="font-size:11.5px;color:var(--sub);margin-bottom:10px">病院に行くほどではない不安も、身近な専門家に</p>
+        <div class="chat" id="chat">
+          <div class="msg them"><div class="who">担当トリマー・さとう</div>こんにちは！モコちゃんのことで気になることはありますか？😊</div>
+          <div class="msg me">最近、興奮するとぜぇぜぇしやすい気がして…トリミング大丈夫でしたか？</div>
+          <div class="msg them"><div class="who">担当トリマー・さとう</div>気管支のこと、プロフィールで拝見しています🐾 今日は呼吸を見ながら、首元をやさしく短時間で進めました。施術中もぜぇぜぇは見られず落ち着いていましたよ。もし咳が続くようなら、かかりつけの動物病院にもご相談くださいね。</div>
+        </div>
+        <div class="chat-in"><input id="chatText" placeholder="メッセージを入力…" onkeydown="if(event.key==='Enter')send()"><button onclick="send()">➤</button></div>
+      </section>
+
+      <!-- ===== 思い出 ===== -->
+      <section class="view" id="v-story">
+        <h3 style="font-size:17px;margin:6px 0 3px">思い出（ストーリー）</h3>
+        <p style="font-size:11.5px;color:var(--sub);margin-bottom:12px">“今”の記録が、そのまま成長の物語に</p>
+        <div class="card">
+          <div class="month">2024年5月</div>
+          <div class="albgrid"><div class="t">🐩<span>05.12</span></div><div class="t">🐩<span>05.12</span></div><div class="t">🐩<span>05.12</span></div></div>
+          <div class="month" style="margin-top:14px">2024年2月</div>
+          <div class="albgrid"><div class="t">🐩<span>02.10</span></div><div class="t">🐩<span>02.10</span></div><div class="t">🐩<span>02.10</span></div></div>
+          <div class="month" style="margin-top:14px">2023年11月</div>
+          <div class="albgrid"><div class="t">🐩<span>11.11</span></div><div class="t">🐩<span>11.11</span></div><div class="t">🐩<span>11.11</span></div></div>
+        </div>
+        <div class="ack"><div class="h"><span class="b">🐾</span>ありのままの“今”が、物語になる</div><p>健康の記録も、成長の写真も、ひとつのIDに。うちの子の毎日が、そのまま大切なストーリーになります。</p></div>
+      </section>
+    </div>
+
+    <div class="nav">
+      <a class="on" data-v="home" onclick="go('home')"><span class="ni">🏠</span>ホーム</a>
+      <a data-v="id" onclick="go('id')"><span class="ni">🪪</span>うちのこID</a>
+      <a data-v="note" onclick="go('note')"><span class="ni">📋</span>カルテ</a>
+      <a data-v="chat" onclick="go('chat')"><span class="ni">💬</span>相談</a>
+      <a data-v="story" onclick="go('story')"><span class="ni">📷</span>思い出</a>
+    </div>
+  </div>
+  <div class="foot">PETORY オーナーアプリ（v2・デモ）｜本アプリは検証用で、医療アドバイスではありません</div>
+<script>
+  function go(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');
+    document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));document.getElementById('screen').scrollTop=0;}
+  let tm;function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(tm);tm=setTimeout(()=>e.classList.remove('show'),2600);}
+  function tog(el){el.classList.toggle('off');toast(el.classList.contains('off')?'共有をオフにしました':'この相手とIDを共有します 🔒');}
+  function feedback(){toast('カートに追加しました（デモ）🛍️');setTimeout(()=>toast('“その子に合う”から、選びたくなる 🐾'),1400);}
+  function send(){const i=document.getElementById('chatText'),t=i.value.trim();if(!t)return;const c=document.getElementById('chat');
+    const m=document.createElement('div');m.className='msg me';m.textContent=t;c.appendChild(m);i.value='';document.getElementById('screen').scrollTop=99999;
+    setTimeout(()=>{const th=document.createElement('div');th.className='msg them';th.innerHTML='<div class="who">担当トリマー・さとう</div>ご相談ありがとうございます😊 モコちゃんの健康プロフィールを見ながらお答えしますね。気になる状態が続くときは、かかりつけの動物病院にもご相談ください。';c.appendChild(th);document.getElementById('screen').scrollTop=99999;},900);}
+</script>
+</body>
+</html>
